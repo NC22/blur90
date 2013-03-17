@@ -25,16 +25,16 @@ type
      ext  : shortstring;
     end;
 
-    mControlls = packed record {кнопки, общие для всех меню}
+    mControlls = packed record {common buttons for all kind menu's}
 	  RIGHT  : key;
 	  LEFT   : key;
 	  UP     : key;
 	  DOWN   : key;
-          SELECT : key; {клик по элементу меню}
-          DELETE : key;
-          S_ALL  : key;
-          UP_10  : key;
-          DOWN_10: key;
+    SELECT : key;
+    DELETE : key;
+    S_ALL  : key;
+    UP_10  : key;
+    DOWN_10: key;
     end;
 
     TFileMan = record
@@ -45,60 +45,57 @@ type
     Tmain = Class
 
 	 private
-	    MusicList     : array of string;
-            OnEndTrigger  : boolean;
-            LiveTrg       : boolean;
+      MusicList     : array of string;
+      OnEndTrigger  : boolean;
+      LiveTrg       : boolean;
 
-            SelfWID       : THandle; { идентификатор главного потока}
-            //SelfHlpWID    : HWND;    { вспомогательное окно для приемо W сообщений}
+      SelfWID       : THandle; { идентификатор главного потока}
 
 	    FileMan       : TFileMan;
 	    lang          : LANGUAGE;
-            Menu          : array[1..2] of TMenu;
+      Menu          : array[1..2] of TMenu;
 	    MenuControlls : mControlls;
 	    ActiveMenu    : shortint;
 
-            PLAYB: key; {PAUSE}
+      PLAYB: key; {PAUSE}
 	    STOP: key;
 	    PREV: key; PREV_A: key;
 	    NEXT: key; NEXT_A: key;
 	    VOLUMEP: key; VOLUMEP_A: key;
 	    VOLUMED: key; VOLUMED_A: key;
 
-            {выделить элемент в менеджере файлов}
-	    INSERT : key;
+      INSERT : key;
 	    MODE_CH: key;
 	    SAVE   : key;
 	    ESC    : key;
 
-            {MENU_A - PLAYLIST | MENU_N - File Manager}
-	    {меню фиксированной длинны}
-	    MENU_A: key; MENU_N: key;
+      {MENU_A - PLAYLIST | MENU_N - File Manager}
+      MENU_A: key; MENU_N: key;
 
-            coord  : TCoord;
-            drop   : string;
+      coord  : TCoord;
+      drop   : string;
 	    sunny  : boolean; {false if proggram not in focus}
 	    slow_delay, slow_delay_cur : smallint; { draw some stuff after that delay in Draw function}
-            console: TConsoleOutput;
+      console: TConsoleOutput;
 	    melody : TPlayer;
-            select : integer;
-            volume : shortint;
+      select : integer;
+      volume : shortint;
 	    pname  : pchar;
 	    mode   : shortint;
-            SongN  : string;
+      SongN  : string;
 
 
 	    key_holder : Tkey_holder;
-            drawMode : shortint;
+      drawMode : shortint;
 
 	    function GetFileInfo(f : string) : fileInfo;
 	    function NameCut(name : string) : string;
-            function IsKeyPressed(var button : key) : boolean ;
+      function IsKeyPressed(var button : key) : boolean ;
 	    procedure MusicListAdd(fullPath : string);
 	    procedure AddM3UToList(M3U_File_Loc : string);
 	    procedure GetSpectr(var outStr : string);
 	    procedure GetOsc(var outStr : string);
-            procedure GetRand(var outStr : string);
+      procedure GetRand(var outStr : string);
 	    procedure Play(selector : smallint = 1);
 	    procedure SelectMenu(id : shortint);
 	    procedure MusicListDelete(Index: integer);
@@ -107,7 +104,7 @@ type
 	    procedure DumpMusicList;
 	    procedure DumpOptions;
 	    procedure StatusLine;
-	    procedure DrawBlank;  	   
+	    procedure DrawBlank;
 	    procedure KillAllMenu;
 	    procedure SaveMusicList;
 	    procedure KeyStateInit;
@@ -128,13 +125,12 @@ type
 
 	public
 	    Constructor Create(wID : THandle);
-            Destructor  Destroy; override;
-            procedure Draw;
-            procedure KeyStateCheck;
-            procedure TurnOff;
-            property  alive : boolean read LiveTrg;
-            procedure PlayMessage(newM : string);
-
+      Destructor  Destroy; override;
+      procedure Draw;
+      procedure KeyStateCheck;
+      procedure TurnOff;
+      property  alive : boolean read LiveTrg;
+      procedure PlayMessage(newM : string);
 	end;
 
 implementation
@@ -153,7 +149,7 @@ LiveTrg := true;
 //SelfHlpWID := hlpWID;
 
 {Настройка окна консоли}
-pname := 'Blur90 v1.3';
+pname := 'Blur90 v1.31';
 
 console := TConsoleOutput.Create;
 console.ConsoleInit;
@@ -200,8 +196,7 @@ if (drawMode < 1) or (drawMode > 3) then drawMode := 2;
   if ParamCount>0 then
      for i := 1 to ParamCount do
         begin
-           if GetFileInfo(ParamStr(i)).ext = 'm3u' then AddM3UToList(ParamStr(i))
-           else MusicListAdd(ParamStr(i));
+          MusicListAdd(ParamStr(i));
         end
   else begin
         SelectMenu(2);
@@ -265,10 +260,17 @@ var
   len,i : integer;
 begin
 
+  if not FileExists(fullPath) then exit;
+
+  if GetFileInfo(fullPath).ext = 'm3u' then begin
+    AddM3UToList(fullPath);
+    exit;
+  end;
+
  len := Length(MusicList);
 
  for i := 0 to len-1 do
-   if AnsiCompareStr(MusicList[i],fullPath) = 0 then exit;
+   if AnsiCompareStr(MusicList[i], fullPath) = 0 then exit;
 
  setlength(MusicList,len+1);
  MusicList[len] := fullPath;
@@ -300,7 +302,7 @@ begin
 
        if buff[1] = '#' then continue;
 
-       if buff[2] <> ':' then {относительная ссылка}
+       if buff[2] <> ':' then { relative link }
         buff := M3U_FInfo.dir + '\' + buff;
 
        MusicListAdd(buff);
@@ -1103,27 +1105,10 @@ begin
 
     for len := 0 to menu[2].ItemsNum-1 do
         if (menu[2].IsItemSelected(len)) and (menu[2].GetItemInfo(len) = '') then
-        begin
+          MusicListAdd(FileMan.workdir + '\' + menu[2].GetItemTitle(len));
 
-          fstr := FileMan.workdir + '\' + menu[2].GetItemTitle(len);
-          finf := GetFileInfo(fstr);
-
-          if finf.ext = 'm3u' then AddM3UToList(fstr)
-          else MusicListAdd(fstr);
-
-        end;
-
-   { console.ConsoleMessage(2 , 20 , 'File already in music list');  }
-
-    if not menu[2].IsItemSelected(menu[2].Pos) then begin
-
-          fstr := FileMan.workdir + '\' + menu[2].GetItemTitle(menu[2].Pos);
-          finf := GetFileInfo(fstr);
-
-          if finf.ext = 'm3u' then AddM3UToList(fstr)
-          else MusicListAdd(fstr);
-
-    end;
+    if not menu[2].IsItemSelected(menu[2].Pos) then
+      MusicListAdd(FileMan.workdir + '\' + menu[2].GetItemTitle(menu[2].Pos));
 
     Play(0);
     KillAllMenu;
@@ -1290,6 +1275,7 @@ TurnOff;
 
 Finalize(MusicList);
 setlength(MusicList,0);
+
 
 MusicListAdd(newM);
 Play(0);
