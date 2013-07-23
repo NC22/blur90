@@ -1,0 +1,1 @@
+bplayer.exe -register
